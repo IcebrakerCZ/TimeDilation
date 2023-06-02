@@ -6,6 +6,12 @@ CXXFLAGS += $(EXTRA_CXXFLAGS)
 LDFLAGS   = -ldl -Wl,--export-dynamic
 LDFLAGS  += $(EXTRA_LDFLAGS)
 
+TEST_CXXFLAGS = $(CXXFLAGS)
+TEST_LDFLAGS  = $(LDFLAGS)
+
+LIBTIMEDILATION_CXXFLAGS = $(CXXFLAGS)
+LIBTIMEDILATION_LDFLAGS  = $(LDFLAGS)
+
 
 .PHONY: all
 all: test libtimedilation.so
@@ -15,38 +21,40 @@ all: test libtimedilation.so
 run: run-test-no-timedilation run-test-with-timedilation
 
 .PHONY: run-test-with-timedilation
-run-test-with-timedilation: test
+run-test-with-timedilation: test libtimedilation.so
 	date
 	TIMEDILATION=4 LD_PRELOAD=$(PWD)/libtimedilation.so ./test
 	date
+	echo
 
 .PHONY: run-test-no-timedilation
-run-test-no-timedilation: test
+run-test-no-timedilation: test libtimedilation.so
 	date
 	LD_PRELOAD=$(PWD)/libtimedilation.so ./test
 	date
+	echo
 
 
 .PHONY: clean
 clean:
 	rm -f test $(TEST_OBJS)
-	rm -f libtimedilation.so $(TIMEDILATION_OBJS)
+	rm -f libtimedilation.so $(LIBTIMEDILATION_OBJS)
 
 
 TEST_SRCS = test.cpp
 TEST_OBJS = $(TEST_SRCS:.cpp=.o)
 $(TEST_OBJS): %.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
+	$(CXX) $(TEST_CXXFLAGS) -c -o $@ $<
 
 test: $(TEST_OBJS)
-	$(CXX) -o $@ $^ $(LDFLAGS)
+	$(CXX) -o $@ $^ $(TEST_LDFLAGS)
 
 
 LIBTIMEDILATION_SRCS = timedilation.cpp
-LIBTIMEDILATION_OBJS = $(TIMEDILATION_SRCS:.cpp=.o)
-$(LIBTIMEDILATION_OBJS): %.o: %.cpp
+LIBTIMEDILATION_OBJS = $(LIBTIMEDILATION_SRCS:.cpp=.o)
+$(LIBTIMEDILATION_OBJS): %.o: %.cpp timespec.h timeval.h
 	$(CXX) $(LIBTIMEDILATION_CXXFLAGS) -c -o $@ $<
 
 
-libtimedilation.so: $(LIBTIMEDILATION_OBJS) timespec.h timeval.h
+libtimedilation.so: $(LIBTIMEDILATION_OBJS)
 	$(CXX) -o $@ $^ -shared $(LIBTIMEDILATION_LDFLAGS)

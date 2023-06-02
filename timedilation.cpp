@@ -157,7 +157,7 @@ void get_set_initial_value(const char* name, T& value)
 #include <sstream>
 
 
-static unsigned long timedilation = 1;
+static unsigned long timedilation = 0;
 
 
 template<typename T>
@@ -266,8 +266,8 @@ void timedilation_init()
   set_rtld_next_symbol(original_epoll_pwait, "epoll_pwait");
 
   set_rtld_next_symbol(original_sleep, "sleep");
-  set_rtld_next_symbol(original_sleep, "usleep");
-  set_rtld_next_symbol(original_sleep, "nanosleep");
+  set_rtld_next_symbol(original_usleep, "usleep");
+  set_rtld_next_symbol(original_nanosleep, "nanosleep");
 
   if (getenv("TIMEDILATION") == NULL)
   {
@@ -460,7 +460,10 @@ int timerfd_settime(int fd, int flags, const itimerspec *new_value, itimerspec *
 //    old_value->it_interval /= timedilation;
   }
 
-  timerfd_timers_map.at(fd).second = *new_value;
+  if (timedilation)
+  {
+    timerfd_timers_map.at(fd).second = *new_value;
+  }
 
   return result;
 }
