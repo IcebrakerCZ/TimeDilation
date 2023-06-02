@@ -156,6 +156,8 @@ void get_set_initial_value(const char* name, T& value)
 
 #include <sstream>
 
+#include "glibc_versions.h"
+
 
 static unsigned long timedilation = 0;
 
@@ -163,55 +165,6 @@ static unsigned long timedilation = 0;
 template<typename T>
 void set_rtld_next_symbol(T& t, const char* name)
 {
-  const char* glibc_versions[] = { "GLIBC_2.30"
-                                 , "GLIBC_2.29"
-                                 , "GLIBC_2.28"
-                                 , "GLIBC_2.27"
-                                 , "GLIBC_2.26"
-                                 , "GLIBC_2.25"
-                                 , "GLIBC_2.24"
-                                 , "GLIBC_2.23"
-                                 , "GLIBC_2.22"
-                                 , "GLIBC_2.18"
-                                 , "GLIBC_2.17"
-                                 , "GLIBC_2.16"
-                                 , "GLIBC_2.15"
-                                 , "GLIBC_2.14"
-                                 , "GLIBC_2.13"
-                                 , "GLIBC_2.12"
-                                 , "GLIBC_2.11"
-                                 , "GLIBC_2.10"
-                                 , "GLIBC_2.9"
-                                 , "GLIBC_2.8"
-                                 , "GLIBC_2.7"
-                                 , "GLIBC_2.6"
-                                 , "GLIBC_2.5"
-                                 , "GLIBC_2.4"
-                                 , "GLIBC_2.3.4"
-                                 , "GLIBC_2.3.3"
-                                 , "GLIBC_2.3.2"
-                                 , "GLIBC_2.17"
-                                 , "GLIBC_2.16"
-                                 , "GLIBC_2.15"
-                                 , "GLIBC_2.14"
-                                 , "GLIBC_2.13"
-                                 , "GLIBC_2.12"
-                                 , "GLIBC_2.11"
-                                 , "GLIBC_2.10"
-                                 , "GLIBC_2.9"
-                                 , "GLIBC_2.8"
-                                 , "GLIBC_2.7"
-                                 , "GLIBC_2.6"
-                                 , "GLIBC_2.5"
-                                 , "GLIBC_2.4"
-                                 , "GLIBC_2.3.4"
-                                 , "GLIBC_2.3.3"
-                                 , "GLIBC_2.3.2"
-                                 , "GLIBC_2.3"
-                                 , "GLIBC_2.2.6"
-                                 , "GLIBC_2.2.5"
-                                 };
-
   for (const char* glibc_version : glibc_versions)
   {
     t = (T) dlvsym(RTLD_NEXT, name, glibc_version);

@@ -39,6 +39,7 @@ run-test-no-timedilation: test libtimedilation.so
 clean:
 	rm -f test $(TEST_OBJS)
 	rm -f libtimedilation.so $(LIBTIMEDILATION_OBJS)
+	rm -f glibc_versions.h
 
 
 TEST_SRCS = test.cpp
@@ -52,9 +53,20 @@ test: $(TEST_OBJS)
 
 LIBTIMEDILATION_SRCS = timedilation.cpp
 LIBTIMEDILATION_OBJS = $(LIBTIMEDILATION_SRCS:.cpp=.o)
-$(LIBTIMEDILATION_OBJS): %.o: %.cpp timespec.h timeval.h
+$(LIBTIMEDILATION_OBJS): %.o: %.cpp timespec.h timeval.h glibc_versions.h
 	$(CXX) $(LIBTIMEDILATION_CXXFLAGS) -c -o $@ $<
 
 
 libtimedilation.so: $(LIBTIMEDILATION_OBJS)
 	$(CXX) -o $@ $^ -shared $(LIBTIMEDILATION_LDFLAGS)
+
+
+glibc_versions.h:
+	strings /lib/x86_64-linux-gnu/libc.so.6                                      \
+	    | grep GLIBC_                                                            \
+	    | grep -v GLIBC_PRIVATE                                                  \
+	    | sort -rV                                                               \
+	    | sed -E -e '1 { s/^(.*)$$/const char* glibc_versions[] = { "\1"/ }'     \
+	             -e '2,999 { s/^(.*)$$/                               , "\1"/ }' \
+	    > $@
+	echo "                              };" >> $@

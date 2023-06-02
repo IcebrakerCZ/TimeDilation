@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+test
+
+# Generated files
+glibc_versions.h
