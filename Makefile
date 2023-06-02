@@ -12,12 +12,18 @@ all: test libtimedilation.so
 
 
 .PHONY: run
-run: run-test
+run: run-test-no-timedilation run-test-with-timedilation
 
-.PHONY: run-test
-run-test: test
+.PHONY: run-test-with-timedilation
+run-test-with-timedilation: test
 	date
-	TIMESHIFT=5 LD_PRELOAD=$(PWD)/libtimedilation.so ./test
+	TIMEDILATION=4 LD_PRELOAD=$(PWD)/libtimedilation.so ./test
+	date
+
+.PHONY: run-test-no-timedilation
+run-test-no-timedilation: test
+	date
+	LD_PRELOAD=$(PWD)/libtimedilation.so ./test
 	date
 
 

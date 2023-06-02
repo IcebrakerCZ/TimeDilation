@@ -157,7 +157,7 @@ void get_set_initial_value(const char* name, T& value)
 #include <sstream>
 
 
-static unsigned long  timedilation = 0;
+static unsigned long timedilation = 1;
 
 
 template<typename T>
@@ -269,14 +269,14 @@ void timedilation_init()
   set_rtld_next_symbol(original_sleep, "usleep");
   set_rtld_next_symbol(original_sleep, "nanosleep");
 
-  if (getenv("timedilation") == NULL)
+  if (getenv("TIMEDILATION") == NULL)
   {
 //    printf("timedilation_init: no timedilation environment variable found\n");
   }
   else
   {
     std::stringstream input;
-    input << getenv("timedilation");
+    input << getenv("TIMEDILATION");
     input >> timedilation;
 //    printf("timedilation_init: found timedilation environment variable: '%s' -> %lu\n", getenv("timedilation"), timedilation);
   }
@@ -288,17 +288,17 @@ void timedilation_init()
   {
     original_clock_gettime(clk_id, &initial_clock_gettime[clk_id]);
     std::stringstream clock_name;
-    clock_name << "timedilation_INITIAL_CLOCK_GETTIME_" << clk_id;
+    clock_name << "TIMEDILATION_INITIAL_CLOCK_GETTIME_" << clk_id;
     get_set_initial_value((clock_name.str() + "_TV_SEC").c_str() , initial_clock_gettime[clk_id].tv_sec);
     get_set_initial_value((clock_name.str() + "_TV_NSEC").c_str(), initial_clock_gettime[clk_id].tv_nsec);
   }
 
   original_gettimeofday(&initial_gettimeofday, NULL);
-  get_set_initial_value("timedilation_INITIAL_GETTIMEOFDAY_TV_SEC" , initial_gettimeofday.tv_sec);
-  get_set_initial_value("timedilation_INITIAL_GETTIMEOFDAY_TV_USEC", initial_gettimeofday.tv_usec);
+  get_set_initial_value("TIMEDILATION_INITIAL_GETTIMEOFDAY_TV_SEC" , initial_gettimeofday.tv_sec);
+  get_set_initial_value("TIMEDILATION_INITIAL_GETTIMEOFDAY_TV_USEC", initial_gettimeofday.tv_usec);
 
   initial_time = original_time(NULL);
-  get_set_initial_value("timedilation_INITIAL_TIME", initial_time);
+  get_set_initial_value("TIMEDILATION_INITIAL_TIME", initial_time);
 
 //  printf("timedilation_init: end\n");
 }
@@ -408,7 +408,7 @@ int timerfd_settime(int fd, int flags, const itimerspec *new_value, itimerspec *
     {
       if (flags & TFD_TIMER_ABSTIME)
       {
-        // Do not timedilation timer cancelation.
+        // Do not time dilate timer cancelation.
         if (!(new_value->it_value.tv_sec == 0 && new_value->it_value.tv_nsec == 1))
         {
           clockid_t clk_id = timerfd_timers_map.at(fd).first;

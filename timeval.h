@@ -1,5 +1,5 @@
-#ifndef ICETRACE_TIMEVAL_H
-#define ICETRACE_TIMEVAL_H
+#ifndef TIMEDILATION_TIMEVAL_H
+#define TIMEDILATION_TIMEVAL_H
 
 
 #include <iostream>
@@ -141,4 +141,4 @@ inline bool operator>=(const timeval& a, timeval const & b)
 }
 
 
-#endif // ICETRACE_TIMEVAL_H
+#endif // TIMEDILATION_TIMEVAL_H
