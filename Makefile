@@ -9,7 +9,7 @@ LDFLAGS  += $(EXTRA_LDFLAGS)
 TEST_CXXFLAGS = $(CXXFLAGS)
 TEST_LDFLAGS  = $(LDFLAGS)
 
-LIBTIMEDILATION_CXXFLAGS = $(CXXFLAGS)
+LIBTIMEDILATION_CXXFLAGS = $(CXXFLAGS) -Wno-nonnull-compare
 LIBTIMEDILATION_LDFLAGS  = $(LDFLAGS)
 
 
@@ -57,8 +57,8 @@ $(LIBTIMEDILATION_OBJS): %.o: %.cpp timespec.h timeval.h glibc_versions.h
 	$(CXX) $(LIBTIMEDILATION_CXXFLAGS) -c -o $@ $<
 
 
-libtimedilation.so: $(LIBTIMEDILATION_OBJS)
-	$(CXX) -o $@ $^ -shared $(LIBTIMEDILATION_LDFLAGS)
+libtimedilation.so: $(LIBTIMEDILATION_OBJS) $(wildcard timedilation-*.cpp)
+	$(CXX) -o $@ $< -shared $(LIBTIMEDILATION_LDFLAGS)
 
 
 glibc_versions.h:
