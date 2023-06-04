@@ -37,19 +37,14 @@ TIMEDILATION_SYMBOL_DEFINITION(timerfd_settime, int, (int fd, int flags, const i
         {
           clockid_t clk_id = timerfd_timers_map.at(fd).first;
 
-          timespec now;
-          clock_gettime(clk_id, &now);
-
-          timespec original_now;
-          original_clock_gettime(clk_id, &original_now);
-
-          timedilation_new_value.it_value = original_now + ((timedilation_new_value.it_value - now) * timedilation);
+          timedilation_new_value.it_value = initial_clock_gettime[clk_id]
+                                          + ((timedilation_new_value.it_value - initial_clock_gettime[clk_id]) * timedilation);
 
           TIMEDILATION_LOG_VERBOSE("fd=" << fd << " flags=" << flags << " clk_id=" << clk_id
-                                   << " now=" << now << " original_now=" << original_now
+                                   << " initial_clock_gettime[clk_id]=" << initial_clock_gettime[clk_id]
                                    << " - " << new_value->it_value << " -> " << timedilation_new_value.it_value
-                                   << " (diff=" << (timedilation_new_value.it_value - now)
-                                   << " initial_diff=" << new_value->it_value - now << ")");
+                                   << " (new_diff=" << (timedilation_new_value.it_value - initial_clock_gettime[clk_id])
+                                   << " initial_diff=" << new_value->it_value - initial_clock_gettime[clk_id] << ")");
         }
       }
       else
@@ -70,13 +65,13 @@ TIMEDILATION_SYMBOL_DEFINITION(timerfd_settime, int, (int fd, int flags, const i
 
   int result = original_timerfd_settime(fd, flags, &timedilation_new_value, old_value);
 
-  if (timedilation && old_value != NULL && result >= 0)
+  if (timedilation && result >= 0)
   {
-    (*old_value) = timerfd_timers_map.at(fd).second;
-  }
+    if (old_value != NULL)
+    {
+      (*old_value) = timerfd_timers_map.at(fd).second;
+    }
 
-  if (timedilation)
-  {
     timerfd_timers_map.at(fd).second = *new_value;
   }
 

@@ -53,12 +53,12 @@ test: $(TEST_OBJS)
 
 LIBTIMEDILATION_SRCS = timedilation.cpp
 LIBTIMEDILATION_OBJS = $(LIBTIMEDILATION_SRCS:.cpp=.o)
-$(LIBTIMEDILATION_OBJS): %.o: %.cpp timespec.h timeval.h glibc_versions.h
+$(LIBTIMEDILATION_OBJS): %.o: %.cpp timespec.h timeval.h glibc_versions.h $(wildcard timedilation-*.cpp)
 	$(CXX) $(LIBTIMEDILATION_CXXFLAGS) -c -o $@ $<
 
 
-libtimedilation.so: $(LIBTIMEDILATION_OBJS) $(wildcard timedilation-*.cpp)
-	$(CXX) -o $@ $< -shared $(LIBTIMEDILATION_LDFLAGS)
+libtimedilation.so: $(LIBTIMEDILATION_OBJS)
+	$(CXX) -o $@ $^ -shared $(LIBTIMEDILATION_LDFLAGS)
 
 
 glibc_versions.h:

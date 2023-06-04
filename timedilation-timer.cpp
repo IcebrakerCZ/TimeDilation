@@ -38,18 +38,14 @@ TIMEDILATION_SYMBOL_DEFINITION(timer_settime, int, (timer_t tid, int flags, cons
         {
           clockid_t clk_id = timer_timers_map.at(tid).first;
 
-          timespec now;
-          clock_gettime(clk_id, &now);
+          timedilation_new_value.it_value = initial_clock_gettime[clk_id]
+                                          + ((timedilation_new_value.it_value - initial_clock_gettime[clk_id]) * timedilation);
 
-          timespec original_now;
-          original_clock_gettime(clk_id, &original_now);
-
-          timedilation_new_value.it_value = original_now + ((timedilation_new_value.it_value - now) * timedilation);
-
-          TIMEDILATION_LOG_VERBOSE("tid=" << (void*) &tid << " clk_id=" << clk_id << " now=" << now << " original_now="
-                                   << original_now << " - " << new_value->it_value << " -> " << timedilation_new_value.it_value
-                                   << " (diff=" << (timedilation_new_value.it_value - now) << " initial_diff="
-                                   << new_value->it_value - now << ")");
+          TIMEDILATION_LOG_VERBOSE("tid=" << (void*) &tid << " clk_id=" << clk_id << " flags=" << flags
+                                   << " initial_clock_gettime[clk_id]=" << initial_clock_gettime[clk_id]
+                                   << " - " << new_value->it_value << " -> " << timedilation_new_value.it_value
+                                   << " (new_diff=" << (timedilation_new_value.it_value - initial_clock_gettime[clk_id])
+                                   << " initial_diff=" << (new_value->it_value - initial_clock_gettime[clk_id]) << ")");
         }
       }
       else
@@ -68,12 +64,15 @@ TIMEDILATION_SYMBOL_DEFINITION(timer_settime, int, (timer_t tid, int flags, cons
 
   int result = original_timer_settime(tid, flags, &timedilation_new_value, old_value);
 
-  if (timedilation && old_value != NULL && result >= 0)
+  if (timedilation && result >= 0)
   {
-    (*old_value) = timer_timers_map.at(tid).second;
-  }
+    if (old_value != NULL)
+    {
+      (*old_value) = timer_timers_map.at(tid).second;
+    }
 
-  timer_timers_map.at(tid).second = *new_value;
+    timer_timers_map.at(tid).second = *new_value;
+  }
 
   return result;
 }
