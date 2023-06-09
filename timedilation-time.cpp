@@ -1,6 +1,8 @@
-/* --------------------------------------------------------------------------------------------------------------------- */
+#include "timespec.h"
 
+#include <sys/time.h>
 #include <time.h>
+
 
 TIMEDILATION_SYMBOL_DEFINITION(clock_gettime, int, (clockid_t clk_id, timespec *tp))
 {
@@ -14,9 +16,6 @@ TIMEDILATION_SYMBOL_DEFINITION(clock_gettime, int, (clockid_t clk_id, timespec *
   return status;
 }
 
-/* --------------------------------------------------------------------------------------------------------------------- */
-
-#include <sys/time.h>
 
 TIMEDILATION_SYMBOL_DEFINITION(gettimeofday, int, (timeval *tp, void *tzp))
 {
@@ -30,9 +29,6 @@ TIMEDILATION_SYMBOL_DEFINITION(gettimeofday, int, (timeval *tp, void *tzp))
   return status;
 }
 
-/* --------------------------------------------------------------------------------------------------------------------- */
-
-#include <time.h>
 
 TIMEDILATION_SYMBOL_DEFINITION(time, time_t, (time_t *t))
 {
@@ -50,5 +46,3 @@ TIMEDILATION_SYMBOL_DEFINITION(time, time_t, (time_t *t))
 
   return tv;
 }
-
-/* --------------------------------------------------------------------------------------------------------------------- */

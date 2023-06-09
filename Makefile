@@ -1,16 +1,15 @@
-CXXFLAGS  = -std=c++17 -Wall -Werror -O2 -ggdb3
-CXXFLAGS += -fPIC -DPIC
-CXXFLGAS += -D_GNU_SOURCE -fno-omit-frame-pointer -DGNU_SOURCE
+CXXFLAGS  = -m64 -std=c++17 -Wall -Werror -O2 -ggdb3
+CXXFLGAS += -fno-omit-frame-pointer
 CXXFLAGS += $(EXTRA_CXXFLAGS)
 
-LDFLAGS   = -ldl -Wl,--export-dynamic
+LDFLAGS   = -Wl,--export-dynamic
 LDFLAGS  += $(EXTRA_LDFLAGS)
 
 TEST_CXXFLAGS = $(CXXFLAGS)
 TEST_LDFLAGS  = $(LDFLAGS)
 
-LIBTIMEDILATION_CXXFLAGS = $(CXXFLAGS) -Wno-nonnull-compare
-LIBTIMEDILATION_LDFLAGS  = $(LDFLAGS)
+LIBTIMEDILATION_CXXFLAGS = $(CXXFLAGS) -pthread -fPIC -DGNU_SOURCE
+LIBTIMEDILATION_LDFLAGS  = $(LDFLAGS)  -pthread -lrt -ldl
 
 
 .PHONY: all

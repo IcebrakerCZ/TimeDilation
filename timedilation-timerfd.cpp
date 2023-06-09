@@ -1,12 +1,13 @@
-/* --------------------------------------------------------------------------------------------------------------------- */
+#include "timespec.h"
 
 #include <map>
 
 #include <sys/timerfd.h>
+#include <unistd.h>
+
 
 std::map<int, std::pair<clockid_t, itimerspec>> timerfd_timers_map;
 
-/* --------------------------------------------------------------------------------------------------------------------- */
 
 TIMEDILATION_SYMBOL_DEFINITION(timerfd_create, int, (clockid_t clockid, int flags))
 {
@@ -20,7 +21,6 @@ TIMEDILATION_SYMBOL_DEFINITION(timerfd_create, int, (clockid_t clockid, int flag
   return fd;
 }
 
-/* --------------------------------------------------------------------------------------------------------------------- */
 
 TIMEDILATION_SYMBOL_DEFINITION(timerfd_settime, int, (int fd, int flags, const itimerspec *new_value, itimerspec *old_value))
 {
@@ -32,8 +32,11 @@ TIMEDILATION_SYMBOL_DEFINITION(timerfd_settime, int, (int fd, int flags, const i
     {
       if (flags & TFD_TIMER_ABSTIME)
       {
-        // Do not dilate time on timer cancelation.
-        if (!(new_value->it_value.tv_sec == 0 && new_value->it_value.tv_nsec == 1))
+        if (new_value->it_value.tv_sec == 0 && new_value->it_value.tv_nsec == 1)
+        {
+          // Do not dilate time on timer cancelation.
+        }
+        else
         {
           clockid_t clk_id = timerfd_timers_map.at(fd).first;
 
@@ -42,7 +45,7 @@ TIMEDILATION_SYMBOL_DEFINITION(timerfd_settime, int, (int fd, int flags, const i
 
           TIMEDILATION_LOG_VERBOSE("fd=" << fd << " flags=" << flags << " clk_id=" << clk_id
                                    << " initial_clock_gettime[clk_id]=" << initial_clock_gettime[clk_id]
-                                   << " - " << new_value->it_value << " -> " << timedilation_new_value.it_value
+                                   << " - it_value " << new_value->it_value << " -> " << timedilation_new_value.it_value
                                    << " (new_diff=" << (timedilation_new_value.it_value - initial_clock_gettime[clk_id])
                                    << " initial_diff=" << new_value->it_value - initial_clock_gettime[clk_id] << ")");
         }
@@ -50,15 +53,19 @@ TIMEDILATION_SYMBOL_DEFINITION(timerfd_settime, int, (int fd, int flags, const i
       else
       {
         timedilation_new_value.it_value *= timedilation;
+
+        TIMEDILATION_LOG_VERBOSE("fd=" << fd << " flags=" << flags
+                                 << " - it_value " << new_value->it_value << " -> " << timedilation_new_value.it_value);
       }
 
       timedilation_new_value.it_interval *= timedilation;
 
-      TIMEDILATION_LOG_VERBOSE("fd=" << fd << " it_interval " << new_value->it_interval
-                               << " -> " << timedilation_new_value.it_interval);
+      TIMEDILATION_LOG_VERBOSE("fd=" << fd << " flags=" << flags
+                               << " - it_interval " << new_value->it_interval << " -> " << timedilation_new_value.it_interval);
     }
     catch (...)
     {
+      TIMEDILATION_LOG_VERBOSE("fd=" << fd << " not in map");
       // pass
     }
   }
@@ -78,7 +85,6 @@ TIMEDILATION_SYMBOL_DEFINITION(timerfd_settime, int, (int fd, int flags, const i
   return result;
 }
 
-/* --------------------------------------------------------------------------------------------------------------------- */
 
 TIMEDILATION_SYMBOL_DEFINITION(timerfd_gettime, int, (int fd, itimerspec *curr_value))
 {
@@ -93,9 +99,6 @@ TIMEDILATION_SYMBOL_DEFINITION(timerfd_gettime, int, (int fd, itimerspec *curr_v
   return result;
 }
 
-/* --------------------------------------------------------------------------------------------------------------------- */
-
-#include <unistd.h>
 
 TIMEDILATION_SYMBOL_DEFINITION(close, int, (int fd))
 {
@@ -103,5 +106,3 @@ TIMEDILATION_SYMBOL_DEFINITION(close, int, (int fd))
 
   return original_close(fd);
 }
-
-/* --------------------------------------------------------------------------------------------------------------------- */

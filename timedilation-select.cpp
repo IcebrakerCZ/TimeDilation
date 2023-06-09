@@ -1,8 +1,7 @@
-/* --------------------------------------------------------------------------------------------------------------------- */
+#include "timeval.h"
 
 #include <sys/select.h>
 
-/* --------------------------------------------------------------------------------------------------------------------- */
 
 TIMEDILATION_SYMBOL_DEFINITION(select, int, (int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, timeval *timeout))
 {
@@ -24,7 +23,6 @@ TIMEDILATION_SYMBOL_DEFINITION(select, int, (int nfds, fd_set *readfds, fd_set *
   return status;
 }
 
-/* --------------------------------------------------------------------------------------------------------------------- */
 
 TIMEDILATION_SYMBOL_DEFINITION(pselect, int, (int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, const timespec *timeout, const __sigset_t *sigmask))
 {
@@ -37,5 +35,3 @@ TIMEDILATION_SYMBOL_DEFINITION(pselect, int, (int nfds, fd_set *readfds, fd_set 
 
   return original_pselect(nfds, readfds, writefds, exceptfds, &newtimeout, sigmask);
 }
-
-/* --------------------------------------------------------------------------------------------------------------------- */

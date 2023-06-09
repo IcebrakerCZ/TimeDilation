@@ -1,13 +1,13 @@
-/* --------------------------------------------------------------------------------------------------------------------- */
+#include "timespec.h"
 
 #include <map>
 
 #include <signal.h>
 #include <time.h>
 
+
 std::map<timer_t, std::pair<clockid_t, itimerspec>> timer_timers_map;
 
-/* --------------------------------------------------------------------------------------------------------------------- */
 
 TIMEDILATION_SYMBOL_DEFINITION(timer_create, int, (clockid_t clockid, sigevent *sevp, timer_t *tid))
 {
@@ -21,7 +21,6 @@ TIMEDILATION_SYMBOL_DEFINITION(timer_create, int, (clockid_t clockid, sigevent *
   return result;
 }
 
-/* --------------------------------------------------------------------------------------------------------------------- */
 
 TIMEDILATION_SYMBOL_DEFINITION(timer_settime, int, (timer_t tid, int flags, const itimerspec *new_value, itimerspec *old_value))
 {
@@ -33,17 +32,20 @@ TIMEDILATION_SYMBOL_DEFINITION(timer_settime, int, (timer_t tid, int flags, cons
     {
       if (flags & TIMER_ABSTIME)
       {
-        // Do not timedilation timer cancelation.
-        if (!(new_value->it_value.tv_sec == 0 && new_value->it_value.tv_nsec == 1))
+        if (new_value->it_value.tv_sec == 0 && new_value->it_value.tv_nsec == 1)
+        {
+          // Do not timedilation timer cancelation.
+        }
+        else
         {
           clockid_t clk_id = timer_timers_map.at(tid).first;
 
           timedilation_new_value.it_value = initial_clock_gettime[clk_id]
                                           + ((timedilation_new_value.it_value - initial_clock_gettime[clk_id]) * timedilation);
 
-          TIMEDILATION_LOG_VERBOSE("tid=" << (void*) &tid << " clk_id=" << clk_id << " flags=" << flags
+          TIMEDILATION_LOG_VERBOSE("tid=" << (void*) &tid << " flags=" << flags << " clk_id=" << clk_id
                                    << " initial_clock_gettime[clk_id]=" << initial_clock_gettime[clk_id]
-                                   << " - " << new_value->it_value << " -> " << timedilation_new_value.it_value
+                                   << " - it_value " << new_value->it_value << " -> " << timedilation_new_value.it_value
                                    << " (new_diff=" << (timedilation_new_value.it_value - initial_clock_gettime[clk_id])
                                    << " initial_diff=" << (new_value->it_value - initial_clock_gettime[clk_id]) << ")");
         }
@@ -51,14 +53,21 @@ TIMEDILATION_SYMBOL_DEFINITION(timer_settime, int, (timer_t tid, int flags, cons
       else
       {
         timedilation_new_value.it_value *= timedilation;
+
+        TIMEDILATION_LOG_VERBOSE("tid=" << (void*) &tid << " flags=" << flags
+                                 << " - it_value " << new_value->it_value << " -> " << timedilation_new_value.it_value);
       }
 
       timedilation_new_value.it_interval *= timedilation;
+
+      TIMEDILATION_LOG_VERBOSE("tid=" << (void*) &tid << " flags=" << flags
+                               << " - it_interval " << new_value->it_interval
+                               << " -> " << timedilation_new_value.it_interval);
     }
     catch (...)
     {
-      printf("timedilation: timer_settime: tid=%p not in map\n", &tid);
-      abort();
+      TIMEDILATION_LOG_VERBOSE("tid=" << (void*) &tid << " not in map");
+      // pass
     }
   }
 
@@ -77,7 +86,6 @@ TIMEDILATION_SYMBOL_DEFINITION(timer_settime, int, (timer_t tid, int flags, cons
   return result;
 }
 
-/* --------------------------------------------------------------------------------------------------------------------- */
 
 TIMEDILATION_SYMBOL_DEFINITION(timer_gettime, int, (timer_t tid, itimerspec *curr_value))
 {
@@ -92,7 +100,6 @@ TIMEDILATION_SYMBOL_DEFINITION(timer_gettime, int, (timer_t tid, itimerspec *cur
   return result;
 }
 
-/* --------------------------------------------------------------------------------------------------------------------- */
 
 TIMEDILATION_SYMBOL_DEFINITION(timer_delete, int, (timer_t tid))
 {
@@ -100,5 +107,3 @@ TIMEDILATION_SYMBOL_DEFINITION(timer_delete, int, (timer_t tid))
 
   return original_timer_delete(tid);
 }
-
-/* --------------------------------------------------------------------------------------------------------------------- */

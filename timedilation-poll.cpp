@@ -1,8 +1,7 @@
-/* --------------------------------------------------------------------------------------------------------------------- */
+#include "timespec.h"
 
 #include <sys/poll.h>
 
-/* --------------------------------------------------------------------------------------------------------------------- */
 
 TIMEDILATION_SYMBOL_DEFINITION(poll, int, (pollfd *fds, nfds_t nfds, int timeout))
 {
@@ -14,7 +13,6 @@ TIMEDILATION_SYMBOL_DEFINITION(poll, int, (pollfd *fds, nfds_t nfds, int timeout
   return original_poll(fds, nfds, timeout);
 }
 
-/* --------------------------------------------------------------------------------------------------------------------- */
 
 TIMEDILATION_SYMBOL_DEFINITION(ppoll, int, (pollfd *fds, nfds_t nfds, timespec *timeout, __sigset_t *ss))
 {
@@ -27,5 +25,3 @@ TIMEDILATION_SYMBOL_DEFINITION(ppoll, int, (pollfd *fds, nfds_t nfds, timespec *
 
   return original_ppoll(fds, nfds, &newtimeout, ss);
 }
-
-/* --------------------------------------------------------------------------------------------------------------------- */

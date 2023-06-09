@@ -1,23 +1,32 @@
-/* --------------------------------------------------------------------------------------------------------------------- */
+#include "glibc_versions.h"
 
-#include "timespec.h"
-#include "timeval.h"
+#include <sstream>
+
+#include <dlfcn.h>
+#include <stdio.h>
+#include <sys/time.h>
+#include <time.h>
+#include <unistd.h>
 
 /* --------------------------------------------------------------------------------------------------------------------- */
 
 static unsigned int timedilation = 0;
 
-static bool timedilation_verbose = false;
-
 /* --------------------------------------------------------------------------------------------------------------------- */
 
-#define TIMEDILATION_LOG_VERBOSE(message)          \
-  do {                                             \
-    std::stringstream m;                           \
-    m << message;                                  \
-    printf("timedilation: %s\n", m.str().c_str()); \
+static bool timedilation_verbose = false;
+
+#define TIMEDILATION_LOG_VERBOSE(message)                          \
+  do {                                                             \
+    if (timedilation_verbose)                                      \
+    {                                                              \
+      std::stringstream m;                                         \
+      m << message;                                                \
+      printf("timedilation: %s: %s\n", __func__, m.str().c_str()); \
+    }                                                              \
   } while(0)
 
+/* --------------------------------------------------------------------------------------------------------------------- */
 
 #define TIMEDILATION_SYMBOL_DEFINITION(symbol_name, return_type, input_args) \
     extern "C"                                                               \
@@ -29,12 +38,10 @@ static bool timedilation_verbose = false;
     return_type symbol_name input_args
 
 
-#include <time.h>
-#include <sys/time.h>
-
 static timespec  initial_clock_gettime[16];
 static timeval   initial_gettimeofday;
 static time_t    initial_time;
+
 
 #include "timedilation-epoll.cpp"
 #include "timedilation-poll.cpp"
@@ -47,17 +54,11 @@ static time_t    initial_time;
 
 /* --------------------------------------------------------------------------------------------------------------------- */
 
-extern "C" {
-
-void timedilation_init()  __attribute__((constructor));
-void timedilation_finish() __attribute__((destructor));
-
-} // extern "C"
-
-
-#include <stdio.h>
-#include <unistd.h>
-
+/**
+ * If the environment variable do not exist yet we are parent process so set the variable.
+ *
+ * If the environment variable exist read it and use it because we are subprocess.
+ */
 template<typename T>
 void get_set_initial_value(const char* name, T& value)
 {
@@ -67,7 +68,7 @@ void get_set_initial_value(const char* name, T& value)
     input << getenv(name);
     input >> value;
 
-    TIMEDILATION_LOG_VERBOSE("get_set_initial_value: " << name << ": loaded " << value << " from '" << getenv(name) << "'");
+    TIMEDILATION_LOG_VERBOSE(name << ": loaded " << value << " from '" << getenv(name) << "'");
 
     return;
   }
@@ -76,30 +77,18 @@ void get_set_initial_value(const char* name, T& value)
   output << value;
   setenv(name, output.str().c_str(), /* overwrite = */ 0);
 
-  TIMEDILATION_LOG_VERBOSE("get_set_initial_value: " << name << ": saved " << value << " as '" << getenv(name) << "'");
+  TIMEDILATION_LOG_VERBOSE(name << ": saved " << value << " as '" << getenv(name) << "'");
 }
 
+/* --------------------------------------------------------------------------------------------------------------------- */
 
-#include <stdio.h>
-#include <dlfcn.h>
-
-#include <sstream>
-
-#include "glibc_versions.h"
-
-
+/**
+ * Get newest symbol available including newest versioned glibc symbols.
+ */
 template<typename T>
 void set_rtld_next_symbol(T& t, const char* name)
 {
-  for (const char* glibc_version : glibc_versions)
-  {
-    t = (T) dlvsym(RTLD_NEXT, name, glibc_version);
-    if (t != NULL)
-    {
-      TIMEDILATION_LOG_VERBOSE("success " << name << " (" << glibc_version << ")");
-      return;
-    }
-  }
+  TIMEDILATION_LOG_VERBOSE("dlsym(RTLD_NEXT, " << name << ")");
 
   t = (T) dlsym(RTLD_NEXT, name);
   if (t != NULL)
@@ -108,50 +97,74 @@ void set_rtld_next_symbol(T& t, const char* name)
     return;
   }
 
-  printf("timedilation: set_rtld_next_symbol: symbol '%s' not found\n", name);
-  abort();
+  for (const char* glibc_version : glibc_versions)
+  {
+    TIMEDILATION_LOG_VERBOSE("dlvsym(RTLD_NEXT, " << name << ", " << glibc_version << ")");
+
+    t = (T) dlvsym(RTLD_NEXT, name, glibc_version);
+    if (t != NULL)
+    {
+      TIMEDILATION_LOG_VERBOSE("success " << name << " (" << glibc_version << ")");
+      return;
+    }
+  }
+
+  printf("timedilation: %s: symbol '%s' not found\n", __func__, name);
 }
 
+/* --------------------------------------------------------------------------------------------------------------------- */
+
+extern "C" {
+
+void timedilation_init()  __attribute__((constructor));
+void timedilation_finish() __attribute__((destructor));
+
+} // extern "C"
+
+/* --------------------------------------------------------------------------------------------------------------------- */
+
+#define TIMEDILATION_INITIALIZE_SYMBOL(symbol_name) set_rtld_next_symbol(original_ ## symbol_name, #symbol_name)
 
 void timedilation_init()
 {
   if (getenv("TIMEDILATION_VERBOSE"))
   {
     timedilation_verbose = true;
+    TIMEDILATION_LOG_VERBOSE("TIMEDILATION_VERBOSE=" << getenv("TIMEDILATION_VERBOSE"));
   }
 
   TIMEDILATION_LOG_VERBOSE("begin");
 
-  set_rtld_next_symbol(original_clock_gettime, "clock_gettime");
-  set_rtld_next_symbol(original_gettimeofday , "gettimeofday");
-  set_rtld_next_symbol(original_time         , "time");
+  TIMEDILATION_INITIALIZE_SYMBOL(time);
+  TIMEDILATION_INITIALIZE_SYMBOL(gettimeofday);
+  TIMEDILATION_INITIALIZE_SYMBOL(clock_gettime);
 
-  set_rtld_next_symbol(original_timer_create , "timer_create");
-  set_rtld_next_symbol(original_timer_settime, "timer_settime");
-  set_rtld_next_symbol(original_timer_gettime, "timer_gettime");
-  set_rtld_next_symbol(original_timer_delete , "timer_delete");
+  TIMEDILATION_INITIALIZE_SYMBOL(timer_create);
+  TIMEDILATION_INITIALIZE_SYMBOL(timer_settime);
+  TIMEDILATION_INITIALIZE_SYMBOL(timer_gettime);
+  TIMEDILATION_INITIALIZE_SYMBOL(timer_delete);
 
-  set_rtld_next_symbol(original_timerfd_create , "timerfd_create");
-  set_rtld_next_symbol(original_timerfd_settime, "timerfd_settime");
-  set_rtld_next_symbol(original_timerfd_gettime, "timerfd_gettime");
+  TIMEDILATION_INITIALIZE_SYMBOL(timerfd_create);
+  TIMEDILATION_INITIALIZE_SYMBOL(timerfd_settime);
+  TIMEDILATION_INITIALIZE_SYMBOL(timerfd_gettime);
 
-  set_rtld_next_symbol(original_close, "close");
+  TIMEDILATION_INITIALIZE_SYMBOL(close);
 
-  set_rtld_next_symbol(original_pthread_cond_clockwait, "pthread_cond_clockwait");
-  set_rtld_next_symbol(original_pthread_cond_timedwait, "pthread_cond_timedwait");
+  TIMEDILATION_INITIALIZE_SYMBOL(pthread_cond_clockwait);
+  TIMEDILATION_INITIALIZE_SYMBOL(pthread_cond_timedwait);
 
-  set_rtld_next_symbol(original_select , "select");
-  set_rtld_next_symbol(original_pselect, "pselect");
+  TIMEDILATION_INITIALIZE_SYMBOL(select);
+  TIMEDILATION_INITIALIZE_SYMBOL(pselect);
 
-  set_rtld_next_symbol(original_poll , "poll");
-  set_rtld_next_symbol(original_ppoll, "ppoll");
+  TIMEDILATION_INITIALIZE_SYMBOL(poll);
+  TIMEDILATION_INITIALIZE_SYMBOL(ppoll);
 
-  set_rtld_next_symbol(original_epoll_wait , "epoll_wait");
-  set_rtld_next_symbol(original_epoll_pwait, "epoll_pwait");
+  TIMEDILATION_INITIALIZE_SYMBOL(epoll_wait);
+  TIMEDILATION_INITIALIZE_SYMBOL(epoll_pwait);
 
-  set_rtld_next_symbol(original_sleep, "sleep");
-  set_rtld_next_symbol(original_usleep, "usleep");
-  set_rtld_next_symbol(original_nanosleep, "nanosleep");
+  TIMEDILATION_INITIALIZE_SYMBOL(sleep);
+  TIMEDILATION_INITIALIZE_SYMBOL(usleep);
+  TIMEDILATION_INITIALIZE_SYMBOL(nanosleep);
 
   if (getenv("TIMEDILATION") == NULL)
   {
@@ -192,6 +205,7 @@ void timedilation_init()
   TIMEDILATION_LOG_VERBOSE("end");
 }
 
+/* --------------------------------------------------------------------------------------------------------------------- */
 
 void timedilation_finish()
 {
