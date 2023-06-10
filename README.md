@@ -1,4 +1,4 @@
-# Time Dilation Library
+Time Dilation Library
 
 GIT:
         https://github.com/IcebrakerCZ/TimeDilation.git
@@ -76,6 +76,7 @@ NOTES:
             }
         
         so the time is slowed down by TIMEDILATION multiple but proportionally to initial_time.
+
 LICENSE:
         LGPLv3+
 
