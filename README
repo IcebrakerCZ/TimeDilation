@@ -34,11 +34,10 @@ NOTES:
             timerfd_create
             timerfd_settime
             timerfd_gettime
-            close
 
-        The library saves actual time when first loaded in the parent process
-        and then uses the actual time and saved initial time to make the process
-        believe that the time flow faster then it really flows in the slow environment.
+        The library saves actual time when it is first loaded in the parent process
+        and then uses the actual time and initial time to make the process
+        believe that the time flows faster then it really flows in the slow environment.
 
         For example unittest checking requests processing like below:
 
@@ -52,16 +51,16 @@ NOTES:
               ASSERT_LE(stop - start, 2);
             }
 
-        will PASS under normally conditions but can FAIL under valgrind becaus the 'process_requests()'
+        will PASS under normally conditions but can FAIL under valgrind becauss the 'process_requests()'
         call can take more than 2 seconds maybe even 10 seconds or more based on amount of allocations.
 
         In this scenario it is best to run the test like:
 
             timedilation -n 8 valgrind --tool=memcheck .... ./unittest
 
-        The timedilation utility will slow down the time 4x so maybe the 'process_requsts()' duration
-        will be 4x smaller than it really took so the test will PASS as usual because the time is
-        redefined as:
+        The timedilation utility will slow down the time 8x so maybe the 'process_requsts()' duration
+        will be 8x smaller than it really took under valgrind so the test will PASS as usual
+        because the time call is dilated as:
 
             time_t time()
             {
@@ -75,7 +74,7 @@ NOTES:
               return tv;
             }
 
-        so the time is slowed down by TIMEDILATION multiple but proportionally to initial_time.
+        so the time is slowed down by timedilation multiple proportionally to initial_time.
 
 LICENSE:
         LGPLv3+
