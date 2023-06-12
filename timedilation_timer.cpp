@@ -34,7 +34,7 @@ TIMEDILATION_SYMBOL_DEFINITION(timer_settime, int, (timer_t tid, int flags, cons
       {
         if (new_value->it_value.tv_sec == 0 && new_value->it_value.tv_nsec == 1)
         {
-          // Do not timedilation timer cancelation.
+          // Do not dilate time on timer cancel.
         }
         else
         {
