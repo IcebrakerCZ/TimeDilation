@@ -150,8 +150,14 @@ void timedilation_init()
 
   TIMEDILATION_INITIALIZE_SYMBOL(close);
 
-  TIMEDILATION_INITIALIZE_SYMBOL(pthread_cond_clockwait);
   TIMEDILATION_INITIALIZE_SYMBOL(pthread_cond_timedwait);
+  TIMEDILATION_INITIALIZE_SYMBOL(pthread_cond_clockwait);
+  TIMEDILATION_INITIALIZE_SYMBOL(pthread_mutex_timedlock);
+  TIMEDILATION_INITIALIZE_SYMBOL(pthread_mutex_clocklock);
+  TIMEDILATION_INITIALIZE_SYMBOL(pthread_rwlock_timedrdlock);
+  TIMEDILATION_INITIALIZE_SYMBOL(pthread_rwlock_clockrdlock);
+  TIMEDILATION_INITIALIZE_SYMBOL(pthread_rwlock_timedwrlock);
+  TIMEDILATION_INITIALIZE_SYMBOL(pthread_rwlock_clockwrlock);
 
   TIMEDILATION_INITIALIZE_SYMBOL(select);
   TIMEDILATION_INITIALIZE_SYMBOL(pselect);
