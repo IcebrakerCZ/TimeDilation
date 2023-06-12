@@ -6,7 +6,7 @@ LDFLAGS   = -Wl,--export-dynamic
 LDFLAGS  += $(EXTRA_LDFLAGS)
 
 TEST_CXXFLAGS = $(CXXFLAGS)
-TEST_LDFLAGS  = $(LDFLAGS)
+TEST_LDFLAGS  = $(LDFLAGS) -lrt
 
 LIBTIMEDILATION_CXXFLAGS = $(CXXFLAGS) -pthread -fPIC -DGNU_SOURCE
 LIBTIMEDILATION_LDFLAGS  = $(LDFLAGS)  -pthread -lrt -ldl
@@ -17,21 +17,25 @@ all: test libtimedilation.so
 
 
 .PHONY: run
-run: run-test-no-timedilation run-test-with-timedilation
+run: run-test-without-timedilation run-test-with-timedilation
 
 .PHONY: run-test-with-timedilation
 run-test-with-timedilation: test libtimedilation.so
-	date
-	TIMEDILATION=4 LD_PRELOAD=$(PWD)/libtimedilation.so ./test
-	date
-	echo
+	@START=`date +%s`; \
+	TIMEDILATION=4 LD_PRELOAD=$(PWD)/libtimedilation.so ./test; \
+	END=`date +%s`; \
+	DURATION=`expr $$END - $$START`; \
+	echo "duration: $$DURATION s"
+	@echo
 
-.PHONY: run-test-no-timedilation
-run-test-no-timedilation: test libtimedilation.so
-	date
-	LD_PRELOAD=$(PWD)/libtimedilation.so ./test
-	date
-	echo
+.PHONY: run-test-without-timedilation
+run-test-without-timedilation: test libtimedilation.so
+	@START=`date +%s`; \
+	LD_PRELOAD=$(PWD)/libtimedilation.so ./test; \
+	END=`date +%s`; \
+	DURATION=`expr $$END - $$START`; \
+	echo "duration: $$DURATION s"
+	@echo
 
 
 .PHONY: clean

@@ -43,14 +43,14 @@ static timeval   initial_gettimeofday;
 static time_t    initial_time;
 
 
-#include "timedilation-epoll.cpp"
-#include "timedilation-poll.cpp"
-#include "timedilation-pthread_cond.cpp"
-#include "timedilation-select.cpp"
-#include "timedilation-sleep.cpp"
-#include "timedilation-time.cpp"
-#include "timedilation-timer.cpp"
-#include "timedilation-timerfd.cpp"
+#include "timedilation_epoll.cpp"
+#include "timedilation_poll.cpp"
+#include "timedilation_pthread.cpp"
+#include "timedilation_select.cpp"
+#include "timedilation_sleep.cpp"
+#include "timedilation_time.cpp"
+#include "timedilation_timer.cpp"
+#include "timedilation_timerfd.cpp"
 
 /* --------------------------------------------------------------------------------------------------------------------- */
 
@@ -109,7 +109,7 @@ void set_rtld_next_symbol(T& t, const char* name)
     }
   }
 
-  printf("timedilation: %s: symbol '%s' not found\n", __func__, name);
+  TIMEDILATION_LOG_VERBOSE("original symbol for symbol '" << name << "' not found");
 }
 
 /* --------------------------------------------------------------------------------------------------------------------- */
