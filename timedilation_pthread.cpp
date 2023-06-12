@@ -20,7 +20,8 @@ TIMEDILATION_SYMBOL_DEFINITION(pthread_cond_timedwait, int, (pthread_cond_t *con
 
   if (timedilation)
   {
-    timespec initial_gettimeofday_timespec = { initial_gettimeofday.tv_sec, initial_gettimeofday.tv_usec * 1000 };
+    timespec initial_gettimeofday_timespec = { .tv_sec = initial_gettimeofday.tv_sec,
+                                               .tv_nsec = initial_gettimeofday.tv_usec * 1000 };
 
     newabstime = initial_gettimeofday_timespec + (((*abstime) - initial_gettimeofday_timespec) * timedilation);
   }
