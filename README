@@ -17,8 +17,14 @@ NOTES:
             epoll_pwait
             poll
             ppoll
-            pthread_cond_clockwait
             pthread_cond_timedwait
+            pthread_cond_clockwait
+            pthread_mutex_timedlock
+            pthread_mutex_clocklock
+            pthread_rwlock_timedrdlock
+            pthread_rwlock_clockrdlock
+            pthread_rwlock_timedwrlock
+            pthread_rwlock_clockwrlock
             select
             pselect
             sleep
