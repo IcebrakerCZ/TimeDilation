@@ -12,6 +12,9 @@ LIBTIMEDILATION_CXXFLAGS = $(CXXFLAGS) -pthread -fPIC -DGNU_SOURCE
 LIBTIMEDILATION_LDFLAGS  = $(LDFLAGS)  -pthread -lrt -ldl
 
 
+TEST_TIMEDILATION ?= 4
+
+
 .PHONY: all
 all: test libtimedilation.so
 
@@ -22,7 +25,8 @@ run: run-test-without-timedilation run-test-with-timedilation
 .PHONY: run-test-with-timedilation
 run-test-with-timedilation: test libtimedilation.so
 	@START=`date +%s`; \
-	TIMEDILATION=4 LD_PRELOAD=$(PWD)/libtimedilation.so ./test; \
+	echo "timedilation: $(TEST_TIMEDILATION)x"; \
+	TIMEDILATION=$(TEST_TIMEDILATION) LD_PRELOAD=$(PWD)/libtimedilation.so ./test; \
 	END=`date +%s`; \
 	DURATION=`expr $$END - $$START`; \
 	echo "duration: $$DURATION s"
@@ -31,6 +35,7 @@ run-test-with-timedilation: test libtimedilation.so
 .PHONY: run-test-without-timedilation
 run-test-without-timedilation: test libtimedilation.so
 	@START=`date +%s`; \
+	echo "timedilation: disabled"; \
 	LD_PRELOAD=$(PWD)/libtimedilation.so ./test; \
 	END=`date +%s`; \
 	DURATION=`expr $$END - $$START`; \
