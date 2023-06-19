@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include <errno.h>
+#include <execinfo.h>
 #include <signal.h>
 #include <string.h>
 #include <sys/timerfd.h>
@@ -89,6 +90,26 @@ int main(int  argc, char *  argv[])
     {
       std::cout << "ERROR: timer_settime: " << strerror(errno) << std::endl;
       return EXIT_FAILURE;
+    }
+
+    {
+      void *buffer[10];
+      int buffer_used_size = backtrace(buffer, sizeof(buffer) / sizeof(void*));
+      char **bt_symbols = backtrace_symbols(buffer, buffer_used_size);
+      for (int x = 0; x < buffer_used_size; ++x)
+      {
+        std::cout << "backtrace: " << bt_symbols[x] << std::endl;
+      }
+    }
+
+    {
+      void *buffer[10];
+      int buffer_used_size = backtrace(buffer, sizeof(buffer) / sizeof(void*));
+      char **bt_symbols = backtrace_symbols(buffer, buffer_used_size);
+      for (int x = 0; x < buffer_used_size; ++x)
+      {
+        std::cout << "backtrace: " << bt_symbols[x] << std::endl;
+      }
     }
 
     while (!timer_handler_called)
