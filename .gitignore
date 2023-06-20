@@ -37,6 +37,3 @@ test
 
 # Generated files
 glibc_versions.h
-
-# Scripts
-timedilation
