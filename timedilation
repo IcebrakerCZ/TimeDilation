@@ -59,10 +59,13 @@ if [ x"$1" = x ] ; then
   exit 1
 fi
 
+CURDIR=`realpath "$0"`
+CURDIR=`dirname "$CURDIR"`
+
 if [ x"$LD_PRELOAD" = x ] ; then
-  export LD_PRELOAD="$(dirname $0)/libtimedilation.so"
+  export LD_PRELOAD="$CURDIR/libtimedilation.so"
 else
-  export LD_PRELOAD="$LD_PRELOAD:$(dirname $0)/libtimedilation.so"
+  export LD_PRELOAD="$LD_PRELOAD:$CURDIR/libtimedilation.so"
 fi
 
 exec "$@"
