@@ -1,8 +1,5 @@
-#include "glibc_versions.h"
-
 #include <sstream>
 
-#include <dlfcn.h>
 #include <stdio.h>
 #include <sys/time.h>
 #include <time.h>
@@ -28,20 +25,11 @@ static bool timedilation_verbose = false;
 
 /* --------------------------------------------------------------------------------------------------------------------- */
 
-#define TIMEDILATION_SYMBOL_DEFINITION(symbol_name, return_type, input_args) \
-    extern "C"                                                               \
-    {                                                                        \
-      typedef return_type (*symbol_name ## _signature)input_args;            \
-      static symbol_name ## _signature  original_ ## symbol_name = NULL;     \
-    }                                                                        \
-                                                                             \
-    return_type symbol_name input_args
-
+#include "timedilation_dlfcn.cpp"
 
 static timespec  initial_clock_gettime[16];
 static timeval   initial_gettimeofday;
 static time_t    initial_time;
-
 
 #include "timedilation_epoll.cpp"
 #include "timedilation_poll.cpp"
@@ -82,38 +70,6 @@ void get_set_initial_value(const char* name, T& value)
 
 /* --------------------------------------------------------------------------------------------------------------------- */
 
-/**
- * Get newest symbol available including newest versioned glibc symbols.
- */
-template<typename T>
-void set_rtld_next_symbol(T& t, const char* name)
-{
-  TIMEDILATION_LOG_VERBOSE("dlsym(RTLD_NEXT, " << name << ")");
-
-  t = (T) dlsym(RTLD_NEXT, name);
-  if (t != NULL)
-  {
-    TIMEDILATION_LOG_VERBOSE("success " << name);
-    return;
-  }
-
-  for (const char* glibc_version : glibc_versions)
-  {
-    TIMEDILATION_LOG_VERBOSE("dlvsym(RTLD_NEXT, " << name << ", " << glibc_version << ")");
-
-    t = (T) dlvsym(RTLD_NEXT, name, glibc_version);
-    if (t != NULL)
-    {
-      TIMEDILATION_LOG_VERBOSE("success " << name << " (" << glibc_version << ")");
-      return;
-    }
-  }
-
-  TIMEDILATION_LOG_VERBOSE("original symbol for symbol '" << name << "' not found");
-}
-
-/* --------------------------------------------------------------------------------------------------------------------- */
-
 extern "C" {
 
 void timedilation_init()  __attribute__((constructor));
@@ -122,8 +78,6 @@ void timedilation_finish() __attribute__((destructor));
 } // extern "C"
 
 /* --------------------------------------------------------------------------------------------------------------------- */
-
-#define TIMEDILATION_INITIALIZE_SYMBOL(symbol_name) set_rtld_next_symbol(original_ ## symbol_name, #symbol_name)
 
 void timedilation_init()
 {
